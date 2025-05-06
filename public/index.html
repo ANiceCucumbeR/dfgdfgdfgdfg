@@ -64,7 +64,7 @@
     </div>
 
     <script>
-        const ws = new WebSocket('ws://localhost:3000');
+        const ws = new WebSocket('wss://dfgdfgdfgdfg-7lp5.onrender.com');
 
         const messagesDiv = document.getElementById('messages');
         const messageInput = document.getElementById('messageInput');
@@ -77,27 +77,39 @@
             console.log(`Connected as ${username}`);
         };
 
-        ws.onmessage = (event) => {
-            try {
-                const { sender, message } = JSON.parse(event.data);
+        ws.onmessage = async (event) => {
+        try {
+            let data;
 
-                const messageDiv = document.createElement('div');
-                messageDiv.textContent = `${sender}: ${message}`;
-                messageDiv.classList.add('message');
-                messageDiv.classList.add(sender === username ? 'self' : 'other');
-                messagesDiv.appendChild(messageDiv);
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            } catch (error) {
-                console.error('Error parsing message:', error);
+            // Check if the message is a Blob
+            if (event.data instanceof Blob) {
+                // Convert Blob to text
+                data = await event.data.text();
+            } else {
+                data = event.data;
             }
-            ws.onerror = (error) => {
-                console.error('WebSocket error:', error);
-            };
 
-            ws.onclose = () => {
-                console.log('WebSocket connection closed.');
-            };
-};
+            // Parse the JSON data
+            const { sender, message } = JSON.parse(data);
+
+            const messageDiv = document.createElement('div');
+            messageDiv.textContent = `${sender}: ${message}`;
+            messageDiv.classList.add('message');
+            messageDiv.classList.add(sender === username ? 'self' : 'other');
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        } catch (error) {
+            console.error('Error parsing message:', error);
+        }
+    };
+
+    ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+    };
+
+    ws.onclose = () => {
+        console.log('WebSocket connection closed.');
+    };
 
         sendButton.addEventListener('click', () => {
             const message = messageInput.value;
@@ -107,7 +119,6 @@
 
                 // Display your own message immediately
                 const messageDiv = document.createElement('div');
-                messageDiv.textContent = `Вы: ${message}`;
                 messageDiv.classList.add('message', 'self');
                 messagesDiv.appendChild(messageDiv);
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
